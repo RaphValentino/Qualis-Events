@@ -1,4 +1,4 @@
-const FORM_ENDPOINT = "https://formsubmit.co/ajax/Info@qualisevents.com";
+const FORM_ACTION = "https://formsubmit.co/Info@qualisevents.com";
 
 const galleryItems = [
   { src: "images/guitar-neon.png", caption: "Neon guitar backdrop" },
@@ -80,8 +80,26 @@ document.addEventListener("keydown", (event) => {
 
 const form = document.getElementById("inquire-form");
 const statusEl = document.getElementById("form-status");
+const submitBtn = form.querySelector(".submit");
 
-form.addEventListener("submit", async (event) => {
+if (new URLSearchParams(window.location.search).has("sent")) {
+  statusEl.textContent = "Thank you. I’ll be in touch soon.";
+  history.replaceState({}, "", `${window.location.pathname}${window.location.hash || "#inquire"}`);
+}
+
+function hiddenInput(name, value) {
+  let input = form.querySelector(`input[name="${name}"]`);
+  if (!input) {
+    input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    form.appendChild(input);
+  }
+  input.value = value;
+  return input;
+}
+
+form.addEventListener("submit", (event) => {
   event.preventDefault();
   statusEl.classList.remove("is-error");
 
@@ -103,52 +121,17 @@ form.addEventListener("submit", async (event) => {
     return;
   }
 
-  const submitBtn = form.querySelector(".submit");
+  hiddenInput("_subject", `Event inquiry from ${name}`);
+  hiddenInput("_template", "table");
+  hiddenInput("_captcha", "false");
+  hiddenInput(
+    "_next",
+    `${window.location.origin}${window.location.pathname}?sent=1#inquire`
+  );
+
   submitBtn.disabled = true;
   statusEl.textContent = "Sending…";
-
-  const payload = {
-    name,
-    email,
-    _replyto: email,
-    _subject: `Event inquiry from ${name}`,
-    _template: "table",
-    _captcha: "false",
-    message,
-  };
-
-  const phone = String(data.get("phone") || "").trim();
-  const date = String(data.get("date") || "").trim();
-  const type = String(data.get("type") || "").trim();
-  if (phone) payload.phone = phone;
-  if (date) payload["event date"] = date;
-  if (type) payload["event type"] = type;
-
-  try {
-    const response = await fetch(FORM_ENDPOINT, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify(payload),
-    });
-    const result = await response.json().catch(() => ({}));
-    const ok = result.success === true || result.success === "true";
-    const needsConfirm =
-      typeof result.message === "string" && /confirm/i.test(result.message);
-
-    if (ok || needsConfirm) {
-      statusEl.textContent = "Thank you. I’ll be in touch soon.";
-      form.reset();
-      return;
-    }
-
-    throw new Error(result.message || "Request failed");
-  } catch (error) {
-    statusEl.classList.add("is-error");
-    statusEl.textContent = "Something went wrong. Please try again in a moment.";
-  } finally {
-    submitBtn.disabled = false;
-  }
+  form.action = FORM_ACTION;
+  form.method = "POST";
+  form.submit();
 });
