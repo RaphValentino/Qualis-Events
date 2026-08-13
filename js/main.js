@@ -1,4 +1,4 @@
-const CONTACT_EMAIL = "";
+const CONTACT_EMAIL = "Info@qualisevents.com";
 
 const galleryItems = [
   { src: "images/guitar-neon.png", caption: "Neon guitar backdrop" },
@@ -116,6 +116,6 @@ form.addEventListener("submit", (event) => {
   const to = CONTACT_EMAIL ? encodeURIComponent(CONTACT_EMAIL) : "";
   window.location.href = `mailto:${to}?subject=${subject}&body=${encodeURIComponent(body)}`;
 
-  statusEl.textContent = "Your email app should open with the inquiry. If it doesn’t, copy your details and send them directly.";
+  statusEl.textContent = `Your email app should open with the inquiry. If it doesn’t, send your details to ${CONTACT_EMAIL}.`;
   form.reset();
 });

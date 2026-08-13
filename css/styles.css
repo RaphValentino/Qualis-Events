@@ -532,10 +532,19 @@ h2 {
   color: rgba(255, 255, 255, 0.45);
 }
 
-.inquire-copy p:last-of-type {
+.inquire-copy p:not(.eyebrow) {
   margin-top: 1.5rem;
   max-width: 28rem;
   color: rgba(255, 255, 255, 0.58);
+}
+
+.inquire-copy a {
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.inquire-copy a:hover {
+  color: var(--white);
 }
 
 .inquire-form {
