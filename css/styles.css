@@ -532,22 +532,14 @@ h2 {
   color: rgba(255, 255, 255, 0.45);
 }
 
-.inquire-copy p:not(.eyebrow) {
+.inquire-copy p:last-of-type {
   margin-top: 1.5rem;
   max-width: 28rem;
   color: rgba(255, 255, 255, 0.58);
 }
 
-.inquire-copy a {
-  text-decoration: underline;
-  text-underline-offset: 0.18em;
-}
-
-.inquire-copy a:hover {
-  color: var(--white);
-}
-
 .inquire-form {
+  position: relative;
   display: flex;
   flex-direction: column;
   gap: 1.35rem;
@@ -622,10 +614,24 @@ h2 {
   transition: background 0.25s ease, color 0.25s ease;
 }
 
-.submit:hover {
+.submit:hover:not(:disabled) {
   background: transparent;
   color: var(--white);
   outline: 1px solid var(--white);
+}
+
+.submit:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.hp {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
 }
 
 .form-status {

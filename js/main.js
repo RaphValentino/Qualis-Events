@@ -1,4 +1,4 @@
-const CONTACT_EMAIL = "Info@qualisevents.com";
+const FORM_ENDPOINT = "https://formsubmit.co/ajax/Info@qualisevents.com";
 
 const galleryItems = [
   { src: "images/guitar-neon.png", caption: "Neon guitar backdrop" },
@@ -81,7 +81,7 @@ document.addEventListener("keydown", (event) => {
 const form = document.getElementById("inquire-form");
 const statusEl = document.getElementById("form-status");
 
-form.addEventListener("submit", (event) => {
+form.addEventListener("submit", async (event) => {
   event.preventDefault();
   statusEl.classList.remove("is-error");
 
@@ -89,6 +89,7 @@ form.addEventListener("submit", (event) => {
   const name = String(data.get("name") || "").trim();
   const email = String(data.get("email") || "").trim();
   const message = String(data.get("message") || "").trim();
+  const honey = String(data.get("_honey") || "").trim();
 
   if (!name || !email || !message) {
     statusEl.classList.add("is-error");
@@ -96,26 +97,58 @@ form.addEventListener("submit", (event) => {
     return;
   }
 
+  if (honey) {
+    statusEl.textContent = "Thank you. I’ll be in touch soon.";
+    form.reset();
+    return;
+  }
+
+  const submitBtn = form.querySelector(".submit");
+  submitBtn.disabled = true;
+  statusEl.textContent = "Sending…";
+
+  const payload = {
+    name,
+    email,
+    _replyto: email,
+    _subject: `Event inquiry from ${name}`,
+    _template: "table",
+    _captcha: "false",
+    message,
+  };
+
   const phone = String(data.get("phone") || "").trim();
   const date = String(data.get("date") || "").trim();
   const type = String(data.get("type") || "").trim();
+  if (phone) payload.phone = phone;
+  if (date) payload["event date"] = date;
+  if (type) payload["event type"] = type;
 
-  const body = [
-    `Name: ${name}`,
-    `Email: ${email}`,
-    phone && `Phone: ${phone}`,
-    date && `Event date: ${date}`,
-    type && `Event type: ${type}`,
-    "",
-    message,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  try {
+    const response = await fetch(FORM_ENDPOINT, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+      body: JSON.stringify(payload),
+    });
+    const result = await response.json().catch(() => ({}));
+    const ok = result.success === true || result.success === "true";
+    const needsConfirm =
+      typeof result.message === "string" && /confirm/i.test(result.message);
 
-  const subject = encodeURIComponent(`Event inquiry from ${name}`);
-  const to = CONTACT_EMAIL ? encodeURIComponent(CONTACT_EMAIL) : "";
-  window.location.href = `mailto:${to}?subject=${subject}&body=${encodeURIComponent(body)}`;
+    if (ok || needsConfirm) {
+      statusEl.textContent = "Thank you. I’ll be in touch soon.";
+      form.reset();
+      return;
+    }
 
-  statusEl.textContent = `Your email app should open with the inquiry. If it doesn’t, send your details to ${CONTACT_EMAIL}.`;
-  form.reset();
+    throw new Error(result.message || "Request failed");
+  } catch (error) {
+    statusEl.classList.add("is-error");
+    statusEl.textContent = "Something went wrong. Please try again in a moment.";
+  } finally {
+    submitBtn.disabled = false;
+  }
 });
