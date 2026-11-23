@@ -1,4 +1,4 @@
-const CONTACT_EMAIL = "";
+const FORM_ACTION = "https://formsubmit.co/Info@qualisevents.com";
 
 const galleryItems = [
   { src: "images/guitar-neon.png", caption: "Neon guitar backdrop" },
@@ -80,6 +80,24 @@ document.addEventListener("keydown", (event) => {
 
 const form = document.getElementById("inquire-form");
 const statusEl = document.getElementById("form-status");
+const submitBtn = form.querySelector(".submit");
+
+if (new URLSearchParams(window.location.search).has("sent")) {
+  statusEl.textContent = "Thank you. I’ll be in touch soon.";
+  history.replaceState({}, "", `${window.location.pathname}${window.location.hash || "#inquire"}`);
+}
+
+function hiddenInput(name, value) {
+  let input = form.querySelector(`input[name="${name}"]`);
+  if (!input) {
+    input = document.createElement("input");
+    input.type = "hidden";
+    input.name = name;
+    form.appendChild(input);
+  }
+  input.value = value;
+  return input;
+}
 
 form.addEventListener("submit", (event) => {
   event.preventDefault();
@@ -89,6 +107,7 @@ form.addEventListener("submit", (event) => {
   const name = String(data.get("name") || "").trim();
   const email = String(data.get("email") || "").trim();
   const message = String(data.get("message") || "").trim();
+  const honey = String(data.get("_honey") || "").trim();
 
   if (!name || !email || !message) {
     statusEl.classList.add("is-error");
@@ -96,26 +115,23 @@ form.addEventListener("submit", (event) => {
     return;
   }
 
-  const phone = String(data.get("phone") || "").trim();
-  const date = String(data.get("date") || "").trim();
-  const type = String(data.get("type") || "").trim();
+  if (honey) {
+    statusEl.textContent = "Thank you. I’ll be in touch soon.";
+    form.reset();
+    return;
+  }
 
-  const body = [
-    `Name: ${name}`,
-    `Email: ${email}`,
-    phone && `Phone: ${phone}`,
-    date && `Event date: ${date}`,
-    type && `Event type: ${type}`,
-    "",
-    message,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  hiddenInput("_subject", `Event inquiry from ${name}`);
+  hiddenInput("_template", "table");
+  hiddenInput("_captcha", "false");
+  hiddenInput(
+    "_next",
+    `${window.location.origin}${window.location.pathname}?sent=1#inquire`
+  );
 
-  const subject = encodeURIComponent(`Event inquiry from ${name}`);
-  const to = CONTACT_EMAIL ? encodeURIComponent(CONTACT_EMAIL) : "";
-  window.location.href = `mailto:${to}?subject=${subject}&body=${encodeURIComponent(body)}`;
-
-  statusEl.textContent = "Your email app should open with the inquiry. If it doesn’t, copy your details and send them directly.";
-  form.reset();
+  submitBtn.disabled = true;
+  statusEl.textContent = "Sending…";
+  form.action = FORM_ACTION;
+  form.method = "POST";
+  form.submit();
 });
